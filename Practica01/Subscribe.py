@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 import paho.mqtt.client as mqtt
+import requests
+import json
 
 # The callback for when the client receives a CONNACK response from the server.
-
+urlPersiana='http://130.206.112.29:1026/v2/entities/Persiana01/attrs/turnPersiana?type=Device'
+urlFrio='http://130.206.112.29:1026/v2/entities/Frio01/attrs/turnFrio?type=Device'
+urlCalor='http://130.206.112.29:1026/v2/entities/Calor01/attrs/turnCalor?type=Device'
+header={'Fiware-Service':'icai10949',
+        'Fiware-ServicePath':'/environment',
+        'Content-Type':'application/json'}
 
 def on_connect(client, userdata, rc):
     print("Connected with result code" + str(rc))
@@ -25,6 +32,9 @@ def on_message(client, userdata, msg):
     global received_in
     global presencia
     global received_pre
+    global pPersiana
+    global pFrio
+    global pCalor
 
 
     if msg.topic == topicLuminosidad:
@@ -41,6 +51,21 @@ def on_message(client, userdata, msg):
         received_pre = True
     if received_ex and received_in and received_lum and received_pre:
         update_actuators(luminosidad, tempExterior, tempInterior, presencia)
+        payloadPersiana = {
+            "value": persiana,
+            "type": "int"
+        }
+        payloadFrio = {
+            "value": calor,
+            "type": "int"
+        }
+        payloadCalor = {
+            "value": frio,
+            "type": "int"
+        }
+        pPersiana = requests.put(urlPersiana, headers=header, data=json.dumps(payloadPersiana));
+        pFrio = requests.put(urlFrio, headers=header, data=json.dumps(payloadFrio));
+        pCalor = requests.put(urlCalor, headers=header, data=json.dumps(payloadCalor));
         received_ex = False
         received_pre = False
         received_lum = False
@@ -88,21 +113,13 @@ def update_actuators(luminosidad, tempExterior, tempInterior, presencia):
     else:
         persiana = luminosidad
         #print("Variable persiana " + "updated to: " + str(persiana))
-    print("Calor: " + str(calor) + " Frio: " + str(frio) + " Persiana: " + str(persiana))
-
-    client.publish(topicPersiana, str(persiana))
-    client.publish(topicFrio, str(frio))
-    client.publish(topicCalor, str(calor))
-
+    #print("Calor: " + str(calor) + " Frio: " + str(frio) + " Persiana: " + str(persiana))
+    print(str(calor) + ","+str(frio) + "," + str(persiana))
 
 topicLuminosidad = "/1234/Dev1094901/attrs/l"
 topicTempExterior = "/1234/Dev1094902/attrs/te"
 topicTempInterior = "/1234/Dev1094903/attrs/ti"
 topicPresencia = "/1234/Dev1094904/attrs/p"
-
-topicPersiana = "/1234/Dev1094905/cmd"
-topicFrio = "/1234/Dev1094906/cmd"
-topicCalor = "/1234/Dev1094907/cmd"
 
 client = mqtt.Client()
 client.on_connect = on_connect
