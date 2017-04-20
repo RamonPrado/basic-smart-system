@@ -12,8 +12,12 @@ def on_connect(client, userdata, rc):
 
 def on_message(client, userdata, msg):
    print(msg.topic + " " + str(msg.payload))
-
-
+   if(msg.topic == "/1234/Dev1094905/#"):
+      client.publish("/1234/Dev1094905/cmdexe",msg.payload)
+   if(msg.topic == "/1234/Dev1094906/#"):
+      client.publish("/1234/Dev1094906/cmdexe",msg.payload)
+   if (msg.topic == "/1234/Dev1094907/#"):
+      client.publish("/1234/Dev1094907/cmdexe", msg.payload)
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
